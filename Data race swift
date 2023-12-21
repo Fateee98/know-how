@@ -1,0 +1,249 @@
+Data Race là gì?
+Thực chất là mình không nghĩ ra “là có khái niệm Data race“, vì trong khi đã có khái niệm Race Condition rồi. Và trong quá trình đọc thêm các sách, báo, tài liệu … nó lại được đề cập tới vài lần. Sau khi vài đường Google thì cả một chân trời kiến thức hiện ra. Tuy nhiên, 2 khái niệm khá là rắc rối và dây mơ rễ má với nhau rất nhiều.
+
+Mình sẽ sử dụng và trích dẫn khá nhiều trong bài viết này. Hi vọng bạn sẽ hiểu được, còn không hiểu thì không sao. Chỉ cần thông được 2 phần cuối của bài viết là ổn rồi.
+
+Khái niệm
+Data Race xảy ra khi có từ 2 thread trở lên cùng truy cập vào một vùng nhớ chung (shared resource) với ít nhất 1 thread thực hiện việc thay đổi giá trị trên vùng nhớ đó.
+
+Đọc qua thì nó cũng giống khái niệm Race Condition. Chúng ta sẽ phân tích 2 mối quan hệ đó ở phần sau.
+
+Điều kiện để Data Race xảy ra như sau:
+
+Có từ 2 thread trở lên cùng truy cập vào shared resource (dữ liệu dùng chung) để đọc hoặc ghi. Cụ thể shared resource là 1 variable hoặc 1 object.
+Có ít nhất 1 thread thay đổi giá trị của variable hoặc object đó. Nếu tất cả thread chỉ đọc dữ liệu sẽ không xảy ra data race.
+Ví dụ
+Trong thực tế, ví dụ của data race là bài toán kinh điển rút tiền tại cây ATM. Giả sử có 1 thẻ ATM và 1 thẻ Visa Debit cùng link đến 1 tài khoản ngân hàng và đi rút tiền cùng lúc. Trong tài khoản còn 50k vừa đủ làm bát bún real cool và cốc trà đá. Mình đồng thời rút ở cả 2 máy ATM 50k. Nếu không xử lý data race, mình sẽ may mắn rút được tổng cộng 100k ở cả 2 máy.
+
+(trích dẫn từ bài viết tại Viblo)
+
+Giải pháp
+Khi có nhiều thread cùng đọc và ghi vào shared resource, xác suất xảy ra data race rất cao. Nên việc giải quyết vấn đề này cũng khá là đơn giản.
+
+Ta cần đảm bảo chỉ duy nhất 1 thread được truy cập vào shared resource tại một thời điểm.
+Từng thread sẽ thay phiên nhau thao tác với shared resource.
+Hành động cứ liên tục lặp lại cho đến khi tất cả được thoả mãn.
+Trong lập trình, đoạn code dùng để read/write shared resource gọi là critical section/critical region.
+
+Việc thay phiên nhau sử dụng critical section là cơ chế để xử lý Data Race, gọi là mutex. Hay còn gọi là mutual exclusion.
+
+Chuỗi hành động đó được gọi là atomic operation với các đặc tính:
+
+Thực thi như một thao tác duy nhất.
+Quá trình thực thi không bị gián đoạn bởi bất kì thread nào.
+Và bạn cũng phải chú ý tới vấn dề Dead Lock khi khoá mãi mãi.
+
+Data Race vs. Race Condition
+Phần lý thuyết trên đã khá là mơ hồ rồi. Giờ chúng ta lại tiếp tục loạn não tiếp với phần so sách giữa chúng.
+
+So sánh
+
+
+Hai vấn đề Data Race và Race Condition hay bị đánh đồng là một (có lẽ vì cùng từ race). Tuy nhiên nó diễn tả hai vấn đề khác nhau trong lập trình multi-thread.
+
+Race Condition
+
+Sẽ tập trung vào thứ tự thực thi của các thread.
+Vấn đề sai sót về mặt thời gian hoặc thứ tự thực thi của các thread trong chương trình khiến cho kết quả cuối cùng không đúng như mong muốn.
+Data Race
+
+Tập trung vào mặt giá trị của dữ liệu
+Các giá trị bị ghi đè lẫn nhau. Dẫn tới việc đọc giá trị sẽ bị sai.
+Về các giải quyết 2 vấn đề này thì khá giống nhau. Chỉ cần đảm bảo một thread được truy cập vào critical section tại một thời điểm.
+
+Mối quan hệ
+Trong thực tế, Race Condition xảy ra do Data Race và Data Race dẫn đến Race Condition. Không khác nhau lắm nhỉ, tuy nhiên hai vấn đề này không phụ thuộc vào nhau.
+
+Một chương trình có thể có data race mà không có race condition.
+Hoặc có race condition mà không có data race.
+Ta hãy xem một ví dụ như sau.
+
+let concurrentQueue = DispatchQueue(label: "com.fx.queue1", attributes: .concurrent)
+var number = 1
+concurrentQueue.async {
+    let temp = self.number
+    self.number += 2
+    print("#1: \(temp) + 2")
+}
+// Thread 2
+concurrentQueue.async {
+    let temp = self.number
+    self.number *= 3
+    print("#2: \(temp) * 3")
+}
+DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    print(self.number)
+}
+Đây là ví dụ cho việc thực hiện một biểu thức đơn giản là 1 + 2 * 3. Bạn hãy thử chạy nhiều lần đoạn kết trên, thì sẽ thấy kết quả rất bất ngờ.
+
+
+
+
+
+Bạn cũng dễ dàng nhận thấy kết quả của các lần chạy khác nhau (9 & 5). Đó cũng là thứ tự mà bạn thực hiện biểu thức 1 + 2 * 3.
+
+Nếu nhân chia trước thì sẽ là 5
+Nếu cộng trừ trước thì sẽ là 9
+Đúng là Magic phải không nào!
+
+Các trường hợp khác
+Tuy tụi nó có mối quan hệ tương hỗ lần nhau. Tuy nhiên, có nhiều trường hợp có cái này không có cái kia. Mình có thể tóm tắt như sau:
+
+Có Data Race dẫn tới Race Condition.
+(ví dụ trên nha)
+
+Có Race Condition mà không có Data Race
+Xem ví dụ sau nha:
+
+concurrentQueue.async {
+    for i in 1...10 {
+        print("🔴 \(i)")
+    }
+}
+concurrentQueue.async {
+    for i in 1...10 {
+        print("🔵 \(i)")
+    }
+}
+Đơn giản là chúng nó mạnh ai nấy chạy. Nếu bạn suy nghĩ về thứ tự lần lượt của các thread, thì đây sẽ rơi vào Race Condition và không có ảnh hưởng nào tới dữ liệu hết.
+
+Có Data Race mà không có Race Condition
+Bạn xem qua ví dụ này nha.
+
+var unsafeNumber: Int = 0
+DispatchQueue.concurrentPerform(iterations: 100) { i in
+    print("#\(i) : \(Thread.current)")
+    unsafeNumber = i
+}
+print(unsafeNumber)
+Mỗi lần thực thi, bạn sẽ nhận được một kết quả khác nhau. Nguyên nhân chính là DispatchQueue.concurrentPerform, nó thực thi đoạn code trên những Thread khác nhau. Số lượng các Thread tuỳ thuộc vào hệ thống quyết định.
+
+Các Thread này cùng nhau thay đổi giá trị của number. Hầu như mọi thứ diễn ra tức thời với nhau. Không có sự xung đột giữa các Thread. Hay cái này ảnh hưởng cái kia. Do đó, hiện tượng Race Condition hầu như không xảy ra.
+
+Tuy nhiên, đó chỉ là suy nghĩ chủ quan của mình khi cố tìm ra ví dụ cho bạn dễ hiểu. Còn nếu dễ hiểu hơn là bài toán ATM ở trên. Mà mình cũng không thể cài đặt hay thực thi 2 chương trình cùng tương tác tới 1 database. Nên ta tạm xem nó là lý thuyết vậy.
+
+Thread safety
+Từ vấn đề Data Race trên, cộng với ngôn ngữ mà chúng ta đang sử dụng là Swift. Với Swift, hầu hết các kiểu dữ liệu của nó mặc định sẽ không an toàn cho thread.
+
+Các Thread có thể thoả mái truy cập đọc/ghi giá trị lên các biến dùng chung trong chương trình.
+
+Vì vậy, để triệt tiêu triệt để Data Race & Race Condition, thì bạn phải có được Thread Safety để sử dụng thường xuyên. Chúng sẽ đảm bảo việc thực hiện theo Serial Queue hoặc Lock Thread.
+
+Ví dụ
+Bạn xem qua ví dụ code sau (là nâng cấp của ví dụ trên). Nhiệm vụ của nó là lưu lại tên của các Thread.
+
+var threads: [Int: String] = [:]
+DispatchQueue.concurrentPerform(iterations: 100) { i in
+    threads[i] = "\(Thread.current)"
+}
+print(threads)
+Bạn thực thi thì sẽ bị crash ngay. Đó chính là hệ quả của Data Race gây ra. Khi dữ liệu bị sửa đổi liên tục và đồng thời, dẫn tới sự tranh chấp nhau giữa nhiều Thread. Và chương trình sẽ ngủm củ tỏi.
+
+Giải pháp
+Bạn có thể áp dụng các giải pháp trước đây của Race Condition. Nhưng ở đây chúng ta sẽ cố tạo ra một Thread Safety, nhằm giúp cho dữ liệu của bạn được an toàn trong các Thread.
+
+Vẫn là ví dụ trên, lần này bạn sẽ giải quyết chúng bằng GCD như sau.
+
+var threads: [Int: String] = [:]
+let lockQueue = DispatchQueue(label: "my.serial.lock.queue")
+DispatchQueue.concurrentPerform(iterations: 100) { i in
+    lockQueue.sync {
+        threads[i] = "\(Thread.current)"
+    }
+}
+print(threads)
+Chìa khoá chính là Serial Queue (critical section). Nó đảm bảo việc ghi dữ liệu là duy nhất. Các thread khác nhau sẽ lần lượt sử dụng nó.
+
+Và tất nhiên, bạn không thể lúc nào cũng khai báo thêm 1 Serial Queue và phải ghi nhớ việc sử dụng serialQueue.sync bọc lại các đoạn code như vậy. Ta sẽ nâng cấp chúng thành một class xịn sò hơn.
+
+Atomic Class
+Bạn xem tiếp ví dụ cho custom class mới nha.
+
+import Foundation
+import Dispatch
+class AtomicStorage {
+    private let lockQueue = DispatchQueue(label: "my.serial.lock.queue")
+    private var storage: [Int: String]
+    
+    init() {
+        self.storage = [:]
+    }
+        
+    func get(_ key: Int) -> String? {
+        lockQueue.sync {
+            storage[key]
+        }
+    }
+    
+    func set(_ key: Int, value: String) {
+        lockQueue.sync {
+            storage[key] = value
+        }
+    }
+    var allValues: [Int: String] {
+        lockQueue.sync {
+            storage
+        }
+    }
+}
+Trong đó:
+
+Các thuộc tính và phương thức của lớp vẫn khai báo bình thường
+Thêm một Serial Queue, với vai trò là cơ chế khoá
+Sẽ triệu hồi thêm .sync cho các thao tác đọc/ghi với dữ liệu
+Các dùng như sau:
+
+let storage = AtomicStorage()
+DispatchQueue.concurrentPerform(iterations: 100) { i in
+    storage.set(i, value: "\(Thread.current)")
+}
+print(storage.allValues)
+Như vậy, bạn sẽ đưa Thread Safety vào trong một custom class. Nhằm đảm bảo mục đích chính là an toàn trong các xử lý đa luồng.
+
+Ngoài ra, bạn có thể sử dụng .barrier với một Concurrent Queue thay cho Serial Queue kìa. (tham khảo bài trước nha)
+
+Atomic Property
+Theo trên, bạn cũng đã biết với Swift thì mặc định các kiểu dữ liệu của nó là sẽ không an toàn cho việc tương tác trong các Thread. Và cách giải quyết là tạo ra 1 Thread hay custom class với một Thread Safety.
+
+Nhưng, nếu chúng ta muốn một cách dùng nào đó nhanh gọn lẹ hơn, thì thật khó. Còn với ngôn ngữ Objective-C, lại cho phép chúng ta khai báo một property/biến với từ khoá là nonatomic & atomic. Khi với atomic, biến của bạn sẽ chỉ được một Thread truy cập và sửa đổi trong một thời điểm nhất định.
+
+Còn Swift, chúng ta sẽ có 1 giải pháp khác như sau:
+
+Atomic Property = Thread Safety + Property Wrappers
+
+ Khai báo
+Bạn sẽ sử dụng tới Property Wrapper để định nghĩa một struct cho phép bạn sử dụng một Thread Safety trong nó. Ta sẽ áp dụng DispatchQueue để làm hạt nhân xử lý. Bạn tham khảo code của nó nha.
+
+@propertyWrapper
+struct Atomic<Value> {
+    private let queue = DispatchQueue(label: "atomic")
+    private var value: Value
+    init(wrappedValue: Value) {
+        self.value = wrappedValue
+    }
+    
+    var wrappedValue: Value {
+        get {
+            return queue.sync { value }
+        }
+        set {
+            queue.sync { value = newValue }
+        }
+    }
+}
+Về Property Wrappers thì mình sẽ trình bày tại một bài viết khác.
+
+ Sử dụng
+Với việc định nghĩa một Property Wrappers, thì sử dụng nó cũng khá đơn giản. Bạn chỉ cần thêm từ khoá @Atomic (tên của struct sau @) trong việc khai báo một biến hay một thuộc tính bất kì. Bạn có thể sử dụng nó vào trong một thuộc tính của một class/struct nào đó cũng được.
+
+Ví dụ, ta khai báo lại biến sau với Property Wrappers trên nha. Tham khảo code nha.
+
+@Atomic var storage: [Int:String] = [:]
+Và chúng ta tiếp tục sử dụng lại ví dụ trên cho biến mới đó.
+
+@Atomic var storage: [Int:String] = [:]
+DispatchQueue.concurrentPerform(iterations: 100) { i in
+    storage[i] = "\(Thread.current)"
+}
+print(storage)
+Với cách này, bạn không cần thay đổi gì nhiều trong code. Bạn vẫn đảm bảo được về mặt hoạt động của chương trình và dữ liệu. Bên cạnh đó còn tránh được Data Race nữa.
