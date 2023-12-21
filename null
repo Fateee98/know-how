@@ -1,0 +1,72 @@
+Nullability trong iOS: Nắm Bắt và Quản Lý Giá Trị Null
+Nullability là một khái niệm quan trọng trong lập trình iOS, giúp nhà phát triển xác định và quản lý cách giá trị null được xử lý trong mã nguồn Objective-C và Swift. Dưới đây là một cái nhìn tổng quan về nullability và cách bạn có thể sử dụng nó trong ứng dụng iOS của mình.
+
+1. Giới Thiệu về Nullability:
+Nullability là khả năng của một biến hoặc tham số để chứa giá trị null. Trong Objective-C và Swift, bạn có thể đánh dấu nullability sử dụng các quan từ nullable và nonnull.
+
+Objective-C:
+objective
+Copy code
+// nullable: biến có thể là null
+NSString * _Nullable nullableString;
+
+// nonnull: biến không thể là null
+NSString * _Nonnull nonnullString;
+Swift:
+swift
+Copy code
+// Biến có thể là null
+var nullableString: String?
+
+// Biến không thể là null
+var nonnullString: String
+2. Quản Lý Nullability Trong Swift:
+Swift mặc định là null-safe, điều này có nghĩa là biến không thể là null trừ khi bạn đánh dấu chúng với Optional.
+
+swift
+Copy code
+// Biến có thể là null
+var nullableString: String?
+
+// Biến không thể là null
+var nonnullString: String
+3. Quản Lý Nullability Trong Objective-C:
+Trong Objective-C, nullability không được mặc định và bạn cần xác định rõ nullability cho từng biến hoặc tham số.
+
+objective
+Copy code
+// nullable: biến có thể là null
+@property (nonatomic, nullable) NSString *nullableString;
+
+// nonnull: biến không thể là null
+@property (nonatomic, nonnull) NSString *nonnullString;
+4. Xử Lý Nullability Trong Hàm:
+Khi định nghĩa hàm trong Objective-C hoặc Swift, bạn cũng có thể sử dụng nullability để mô tả giá trị mà hàm có thể trả về hoặc nhận vào.
+
+Objective-C:
+objective
+Copy code
+- (nullable NSString *)processNullableString:(nullable NSString *)inputString;
+- (nonnull NSString *)processNonnullString:(nonnull NSString *)inputString;
+Swift:
+swift
+Copy code
+func processNullableString(_ inputString: String?) -> String?
+func processNonnullString(_ inputString: String) -> String
+5. Kiểm Tra Giá Trị Null:
+Trong cả Swift và Objective-C, bạn có thể sử dụng kiểm tra nil để xác định xem một biến có giá trị null hay không.
+
+Objective-C:
+objective
+Copy code
+if (nullableString == nil) {
+    NSLog(@"Nullable string is null");
+}
+Swift:
+swift
+Copy code
+if nullableString == nil {
+    print("Nullable string is null")
+}
+Kết Luận:
+Nullability là một phần quan trọng trong việc xây dựng ứng dụng iOS an toàn và dễ bảo trì. Bằng cách sử dụng đúng cách, bạn có thể giảm nguy cơ lỗi liên quan đến giá trị null và làm cho mã nguồn của mình trở nên rõ ràng và dễ hiểu hơn. Điều này giúp tăng cường tính ổn định và hiệu suất của ứng dụng của bạn.
