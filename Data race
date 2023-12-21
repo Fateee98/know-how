@@ -1,0 +1,83 @@
+Data Race trong Objective-C và Cách Giải Quyết
+Data Race là một vấn đề phổ biến khi làm việc với đa luồng trong lập trình Objective-C. Nó xảy ra khi hai hoặc nhiều luồng cùng truy cập một vùng nhớ chung và ít nhất một trong số chúng thực hiện việc thay đổi giá trị trong vùng nhớ đó. Dưới đây là khái niệm và cách giải quyết Data Race trong Objective-C.
+
+Khái Niệm:
+Data Race trong Objective-C tập trung vào sự đụng độ giữa các thao tác đọc và ghi dữ liệu trong môi trường đa luồng. Điều này xảy ra khi có ít nhất hai luồng cùng truy cập vào một biến hoặc đối tượng chia sẻ, và ít nhất một luồng thực hiện thay đổi giá trị của nó.
+
+Ví Dụ:
+Giả sử có một biến counter được sử dụng chung giữa hai luồng:
+
+objective
+Copy code
+// Biến chia sẻ
+NSInteger counter = 0;
+
+// Luồng 1
+dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    for (int i = 0; i < 10000; i++) {
+        counter++; // Thao tác ghi dữ liệu
+    }
+});
+
+// Luồng 2
+dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    for (int i = 0; i < 10000; i++) {
+        counter++; // Thao tác ghi dữ liệu
+    }
+});
+Ở đây, cả hai luồng đều cùng thao tác và thay đổi giá trị của counter. Sự đụng độ giữa việc đọc và ghi dữ liệu này có thể dẫn đến Data Race.
+
+Giải Quyết:
+Để giải quyết Data Race trong Objective-C, có một số cách:
+
+Sử dụng @synchronized:
+
+objective
+Copy code
+// Luồng 1
+@synchronized(self) {
+    // Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+}
+
+// Luồng 2
+@synchronized(self) {
+    // Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+}
+Sử dụng NSLock:
+
+objective
+Copy code
+// Khởi tạo NSLock
+NSLock *myLock = [[NSLock alloc] init];
+
+// Luồng 1
+[myLock lock];
+// Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+[myLock unlock];
+
+// Luồng 2
+[myLock lock];
+// Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+[myLock unlock];
+Sử dụng Dispatch Queues với Serial Queue:
+
+objective
+Copy code
+// Khởi tạo Serial Queue
+dispatch_queue_t serialQueue = dispatch_queue_create("com.example.serialQueue", DISPATCH_QUEUE_SERIAL);
+
+// Luồng 1
+dispatch_async(serialQueue, ^{
+    // Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+});
+
+// Luồng 2
+dispatch_async(serialQueue, ^{
+    // Thực hiện các thao tác đọc và ghi trên dữ liệu chia sẻ
+});
+Bằng cách này, chúng ta đảm bảo rằng chỉ một luồng được phép truy cập vào vùng nhớ chia sẻ tại một thời điểm, từ đó tránh được Data Race.
+
+
+
+
+
